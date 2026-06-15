@@ -667,8 +667,11 @@ export default function InstanceView({ onOpenMenu }: { onOpenMenu: () => void })
       ) : (
         <div className="iv-stage iv-stage--vnc">
           <div className="iv-canvas">
+          {/* 切勿给本 iframe 加 key（如 key={id}）：那会让切换实例时 React 重挂 iframe（先删旧元素再建新元素），
+              旧元素被删时 ws 未必干净关闭 → 实例服务端残留半开连接 → 回到该实例再开新 ws 时新旧并存把 Xvnc 卡死
+              （刷新都救不了、要重启容器）。无 key 时切实例只改 src，浏览器会“导航”iframe：旧文档 unload 干净关闭旧 ws，
+              再加载新实例。重连仍走整页重载（见 setMode / 重新连接 / restartInstance）。 */}
           <iframe
-            key={id}
             ref={frameRef}
             className="iv-frame"
             src={desktopUrl(id)}
