@@ -1331,22 +1331,29 @@ function InstanceAdminCard({
   return (
     <div className={'inst-card' + (menuOpen ? ' open-menu' : '')}>
       <div className="inst-head">
-        <span className="inst-name">{inst.name}</span>
+        <span className="inst-name" title={inst.name}>
+          {inst.name}
+        </span>
         <span className={'tag ' + badge.cls}>{badge.text}</span>
-        {outdated && !acting && (
-          <span className="tag tag-warn" title="该实例的镜像落后于最新版，点「升级实例」可更新">
-            可升级
-          </span>
-        )}
-        {inst.imageVersion && (
-          <span
-            className="tag tag-muted"
-            title={/^\d+\.\d+\.\d+$/.test(inst.imageVersion) ? '该实例当前运行的镜像版本' : '本地自构建镜像（无发布版本号，显示镜像短 id）'}
-          >
-            镜像 {/^\d+\.\d+\.\d+$/.test(inst.imageVersion) ? `v${inst.imageVersion}` : inst.imageVersion.slice(0, 8)}
-          </span>
-        )}
       </div>
+      {/* 次要元数据独占一行（可换行），不再和名字挤在标题行导致名字被截断、徽标竖排换行 */}
+      {((outdated && !acting) || inst.imageVersion) && (
+        <div className="inst-meta">
+          {outdated && !acting && (
+            <span className="tag tag-warn" title="该实例的镜像落后于最新版，点「升级实例」可更新">
+              可升级
+            </span>
+          )}
+          {inst.imageVersion && (
+            <span
+              className="tag tag-muted"
+              title={/^\d+\.\d+\.\d+$/.test(inst.imageVersion) ? '该实例当前运行的镜像版本' : '本地自构建镜像（无发布版本号，显示镜像短 id）'}
+            >
+              镜像 {/^\d+\.\d+\.\d+$/.test(inst.imageVersion) ? `v${inst.imageVersion}` : inst.imageVersion.slice(0, 8)}
+            </span>
+          )}
+        </div>
+      )}
       <div className="inst-sub">
         {sub}
         {!acting && ` · 可访问 ${userCount} 人`}
