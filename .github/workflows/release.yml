@@ -102,6 +102,21 @@ jobs:
           echo "④ 微信模式 ✓"
           docker rm -f probe
 
+      # 生成 OCI labels（含 org.opencontainers.image.version=<语义化版本>）。
+      # 关键：实例镜像卡片的「镜像 vX.Y.Z」角标就读这个 label；不打 label 会露出 base 镜像的
+      # 876361b9-ls121，用户以为没升级成功、也分不清版本（v1.4.4 的回归）。metadata-action 会覆盖 base label。
+      - name: Docker metadata (labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.ver.outputs.owner }}/${{ matrix.image }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' }}
+
       # ── 按 digest 推送到 GHCR（不打 tag）。同一内容跨仓库 digest 相同，merge 时再复制到 Docker Hub ──
       - name: Build and push by digest
         id: build
@@ -111,6 +126,7 @@ jobs:
           file: ${{ matrix.dockerfile }}
           platforms: ${{ matrix.platform }}
           build-args: ${{ matrix.name == 'panel' && format('WOC_VERSION={0}', steps.ver.outputs.version) || '' }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.name }}-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}-${{ matrix.arch }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ steps.ver.outputs.owner }}/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
